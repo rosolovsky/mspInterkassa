@@ -14,20 +14,20 @@ $tmp = array(
 	),
 	'shop_id' => array(
 		'xtype' => 'textfield',
-		'value' => 'F3773478-AEE0-13B3-D4B9-BAE553F2EC9D',
+		'value' => '',
 	),
 	'secret_key' => array(
 		'xtype' => 'text-password',
-		'value' => 'mm3L9ULUKgJHwGzS',
+		'value' => '',
 	),
 	'success_id' => array(
 		'xtype' => 'numberfield',
-		'value' => 50,
+		'value' => 0,
 
 	),
 	'failure_id' => array(
 		'xtype' => 'numberfield',
-		'value' => 51,
+		'value' => 0,
 	),
 
 );
