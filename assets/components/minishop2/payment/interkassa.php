@@ -17,16 +17,16 @@ $params = array();
 /* @var msPaymentInterface|Interkassa $handler */
 $handler = new Interkassa($modx->newObject('msOrder'));
 
-if (!empty($_REQUEST['ik_sign_hash']) && !empty($_REQUEST['ik_payment_id']) && empty($_REQUEST['action'])) {
-	if ($order = $modx->getObject('msOrder', $_REQUEST['ik_payment_id'])) {
+if (!empty($_REQUEST['ik_sign']) && !empty($_REQUEST['ik_pm_no']) && empty($_REQUEST['action'])) {
+	if ($order = $modx->getObject('msOrder', $_REQUEST['ik_pm_no'])) {
 		$handler->receive($order, $_REQUEST);
 	}
 	else {
-		$modx->log(modX::LOG_LEVEL_ERROR, '[miniShop2:Interkassa] Could not retrieve order with id '.$_REQUEST['LMI_PAYMENT_NO']);
+		$modx->log(modX::LOG_LEVEL_ERROR, '[miniShop2:Interkassa] Could not retrieve order with id '.$_REQUEST['ik_pm_no']);
 	}
 }
 
-if (!empty($_REQUEST['ik_payment_id'])) {$params['msorder'] = $_REQUEST['ik_payment_id'];}
+if (!empty($_REQUEST['ik_pm_no'])) {$params['msorder'] = $_REQUEST['ik_pm_no'];}
 
 $success = $failure = $modx->getOption('site_url');
 if ($id = $modx->getOption('ms2_payment_ik_success_id', null, 0)) {
