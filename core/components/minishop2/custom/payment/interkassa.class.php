@@ -17,10 +17,11 @@ class Interkassa extends msPaymentHandler implements msPaymentInterface {
 
 		$this->config = array_merge(array(
 			'paymentUrl' => $paymentUrl
-		,'checkoutUrl' => $this->modx->getOption('ms2_payment_ik_url', null, 'https://www.interkassa.com/lib/payment.php', true)
-		,'shop_id' => $this->modx->getOption('ms2_payment_ik_shop_id', null, 'F3773478-AEE0-13B3-D4B9-BAE553F2EC9D', true)
-		,'secret_key' => $this->modx->getOption('ms2_payment_ik_secret_key', null, 'mm3L9ULUKgJHwGzS')
-		,'json_response' => false
+			,'checkoutUrl' => $this->modx->getOption('ms2_payment_ik_url', null, 'https://sci.interkassa.com', true)
+			,'kassa_id' => $this->modx->getOption('ms2_payment_ik_shop_id', null, '5294af0ebf4efc6549330a93', true)
+			,'secret_key' => $this->modx->getOption('ms2_payment_ik_secret_key', null, 'mm3L9ULUKgJHwGzS', true)
+			,'ik_currency' => $this->modx->getOption('ms2_payment_ik_currency', null, 'UAH', true)
+			,'json_response' => false
 		), $config);
 	}
 
@@ -35,14 +36,18 @@ class Interkassa extends msPaymentHandler implements msPaymentInterface {
 
 	public function getPaymentLink(msOrder $order) {
 		$id = $order->get('id');
+		$ik_desc = 'Заказ №'.$id;
 		$sum = number_format($order->get('cost'), 2, '.', '');
+		$ik_sign = $sum.':'.$this->config['kassa_id'].':'.$this->config['ik_currency'].':'.$ik_desc.':'.$id.':'.$this->config['secret_key'];
+		$ik_sign = base64_encode(md5($ik_sign, true));
 		$request = array(
 			'url' => $this->config['checkoutUrl']
-		,'ik_shop_id' => $this->config['shop_id']
-		,'ik_payment_amount' => $sum
-		,'ik_payment_id' => $id
-		,'ik_payment_desc' => 'Payment #'.$id
-		,'ik_paysystem_alias' =>''
+			,'ik_co_id' => $this->config['kassa_id']
+			,'ik_am' => $sum
+			,'ik_cur' => $this->config['ik_currency']
+			,'ik_pm_no' => $id
+			,'ik_desc' => $ik_desc
+			,'ik_sign' => $ik_sign
 		);
 		$link = $this->config['checkoutUrl'] .'?'. http_build_query($request);
 		return $link;
@@ -53,14 +58,12 @@ class Interkassa extends msPaymentHandler implements msPaymentInterface {
 	public function receive(msOrder $order, $params = array()) {
 		$id = $order->get('id');
 		$sum = number_format($order->get('cost'), 2, '.', '');
-
-		$crc1 = $_REQUEST['ik_shop_id'].':'.$_REQUEST['ik_payment_amount'].':'.$_REQUEST['ik_payment_id'].':'.$_REQUEST['ik_paysystem_alias'];
-		$crc2 = $_REQUEST['ik_baggage_fields'].':'.$_REQUEST['ik_payment_state'].':'.$_REQUEST['ik_trans_id'].':'.$_REQUEST['ik_currency_exch'];
-		$crc3 = $_REQUEST['ik_fees_payer'].':'.$this->config['secret_key'];
-		$crc = md5($crc1.':'.$crc2.':'.$crc3);
-
-		/*$crc = md5($sum.':'.$id.':'.$this->config['secret_key']);*/
-		if (strtoupper($_REQUEST['ik_sign_hash']) == strtoupper($crc)) {
+		$crc1 = $_REQUEST['ik_am'].':'.$_REQUEST['ik_co_id'].':'.$_REQUEST['ik_co_prs_id'].':'.$_REQUEST['ik_co_rfn'].':'.$_REQUEST['ik_cur'];
+		$crc2 = $_REQUEST['ik_desc'].':'.$_REQUEST['ik_inv_crt'].':'.$_REQUEST['ik_inv_id'].':'.$_REQUEST['ik_inv_prc'].':'.$_REQUEST['ik_inv_st'];
+		$crc3 = $_REQUEST['ik_pm_no'].':'.$_REQUEST['ik_ps_price'].':'.$_REQUEST['ik_pw_via'].':'.$_REQUEST['ik_trn_id'].':'.$this->config['secret_key'];
+		$crc = $crc1.':'.$crc2.':'.$crc3;
+		$crc = base64_encode(md5($crc, true));
+		if ($_REQUEST['ik_sign'] == $crc) {
 			/* @var miniShop2 $miniShop2 */
 			$miniShop2 = $this->modx->getService('miniShop2');
 			@$this->modx->context->key = 'mgr';
